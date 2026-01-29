@@ -1,78 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Inspection Portal</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="https://www.carlstahl.com/images/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="https://www.carlstahl.com/images/favicon.ico">
+    
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            background: linear-gradient(to right, #2c3e50 0%, #34495e 100%);
-        }
-        
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1400px;
             width: 100%;
-            margin: 0 auto;
-            background: #fff;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
         
         iframe {
             flex: 1;
             border: none;
             width: 100%;
+            height: 100%;
         }
         
         .logo-container {
             text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-top: 2px solid #e0e0e0;
+            padding: 12px 10px;
+            background: #fff;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
         }
         
         .logo-container img {
-            height: 60px;
+            height: 50px;
             max-width: 90%;
             object-fit: contain;
         }
-
-        /* Responsive design */
+        
+        /* Mobile optimizations */
         @media (max-width: 768px) {
-            .container {
-                max-width: 100%;
-                box-shadow: none;
+            .logo-container {
+                padding: 8px 5px;
             }
             
             .logo-container img {
-                height: 45px;
+                height: 40px;
             }
+        }
+        
+        @media (max-width: 480px) {
+            .logo-container {
+                padding: 6px 5px;
+            }
+            
+            .logo-container img {
+                height: 35px;
+            }
+        }
+        
+        /* Prevent zoom on input focus (iOS) */
+        @media (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        
+        /* Loading state */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <iframe 
-            src="https://script.google.com/macros/s/AKfycbyKpaxqFPvoWkj7EAdH7s2fU5q4sFivnUN1Rdm2PAJrRyQEY1ky0p1qKbsbgW5-dlEXXA/exec" 
-            allowfullscreen="true">
-        </iframe>
+    <div class="loading" id="loading">Loading...</div>
+    
+    <iframe 
+        id="mainIframe"
+        src="https://script.google.com/macros/s/AKfycby31Lxej-h9OcIiFamQSv4OIJJQH63G7GVT-S0pb3C2YeJBXOmnYe7fXraUWFwsCMej0Q/exec" 
+        allowfullscreen="true"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        loading="lazy">
+    </iframe>
 
-        <div class="logo-container">
-            <img src="https://www.carlstahl.com/images/logo/CarlStahl_Logo_RGB.svg" alt="Carl Stahl Logo">
-        </div>
+    <div class="logo-container">
+        <img src="https://www.carlstahl.com/images/logo/CarlStahl_Logo_RGB.svg" alt="Carl Stahl Logo">
     </div>
 
     <script>
+        // Remove loading indicator when iframe loads
+        const iframe = document.getElementById('mainIframe');
+        const loading = document.getElementById('loading');
+        
+        iframe.addEventListener('load', function() {
+            if (loading) {
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Fullscreen functionality (works on user interaction)
         window.onload = function() {
-            document.querySelector('iframe').requestFullscreen().catch((err) => {
-                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-            });
+            // Note: Fullscreen API requires user interaction on most mobile browsers
+            // Auto-fullscreen on load may not work on mobile devices
+            const requestFullscreen = () => {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch((err) => {
+                        console.log(`Fullscreen not available: ${err.message}`);
+                    });
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
+                }
+            };
+            
+            // Attempt fullscreen (may not work without user interaction)
+            requestFullscreen();
+            
+            // Alternative: Add a button for user to trigger fullscreen
+            document.body.addEventListener('click', function(e) {
+                if (e.target.classList.contains('fullscreen-trigger')) {
+                    requestFullscreen();
+                }
+            }, { once: true });
         };
+        
+        // Prevent pull-to-refresh on mobile
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', (e) => {
+            const touchY = e.touches[0].clientY;
+            const touchDiff = touchY - touchStartY;
+            
+            if (touchDiff > 0 && window.scrollY === 0) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
